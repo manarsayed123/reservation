@@ -4,6 +4,7 @@ from django.shortcuts import render
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView, CreateAPIView, DestroyAPIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from reservation.custom_permissions import IsAdmin
 from reservation.utility import get_best_fit_table_slots, get_best_available_table_on_time
@@ -27,7 +28,7 @@ class ListBestFitTableTimeSlots(ListAPIView):
 
 
 class TableReservation(CreateAPIView):
-    serializer_class = ReservationSerializer
+    serializer_class = ReservationPostRequestSerializer
     queryset = Reservation.objects.all()
 
     def create(self, request, *args, **kwargs):
@@ -36,10 +37,12 @@ class TableReservation(CreateAPIView):
             best_table = get_best_available_table_on_time(self.request.data.get('start_time'),
                                                           self.request.data.get('end_time'),
                                                           self.request.data.get('group_member_count'))
-            obj = Reservation.objects.create(start_time=self.request.data.get('start_time'),
-                                             end_time=self.request.data.get('end_time'), table_id=best_table.id,
-                                             date=datetime.today().strftime('%Y-%m-%d'))
-            return Response(ReservationSerializer(obj).data)
+            if best_table:
+                obj = Reservation.objects.create(start_time=self.request.data.get('start_time'),
+                                                 end_time=self.request.data.get('end_time'), table_id=best_table.id,
+                                                 date=datetime.today().strftime('%Y-%m-%d'))
+                return Response(ReservationSerializer(obj).data)
+            return Response("on this time there are no table fit your group count")
 
 
 class ListReservation(ListAPIView):
@@ -56,8 +59,11 @@ class ListTodayReservation(ListAPIView):
     queryset = Reservation.objects.filter(date=datetime.today().strftime('%Y-%m-%d'))
 
 
-class DeleteReservation(DestroyAPIView):
-    queryset = Reservation.objects.filter(date=datetime.today().strftime('%Y-%m-%d'))
+class DeleteReservation(APIView):
 
-    def perform_destroy(self, instance):
-        instance.delete()
+    def delete(self, request, reservation_id):
+        reservation = Reservation.objects.filter(id=reservation_id, date=datetime.today().strftime('%Y-%m-%d')).first()
+        if not reservation:
+            return Response("There are no reservation today with this id")
+        reservation.delete()
+        return Response("reservation deleted successfully")

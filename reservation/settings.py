@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'authentication',
+    'rest_framework_swagger',
     'table',
     'tablereservation',
 ]
@@ -174,3 +175,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 RESTAURANT_OPEN_AT = datetime.time(12, 00)
 RESTAURANT_CLOSE_AT = datetime.time(23, 59)
 MAX_TABLE_SEATS_COUNT = 12
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+        "api_key": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "JWT authorization"
+        },
+    },
+    "produces": ["application/json"], "schemes": ["https", "http"], "securityDefinitions": {}
+}

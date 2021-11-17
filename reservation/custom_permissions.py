@@ -5,9 +5,11 @@ from authentication.models import User
 
 class IsAdmin(BasePermission):
     """
-    Allows access only to doctors.
+    Allows access only to admin role.
     """
 
     def has_permission(self, request, view):
-        return bool(request.user and request.user.role == User.ADMIN)
-
+        if hasattr(request.user, 'role'):
+            return bool(request.user and request.user.role == User.ADMIN)
+        else:
+            return False
